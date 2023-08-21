@@ -167,7 +167,12 @@ public class ChatGPTAPI: @unchecked Sendable {
     }
     #else
 
-    private let urlSession = URLSession.shared
+    private let urlSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 180.0 // Set your timeout value here.
+        return URLSession(configuration: configuration)
+    }()
+
     private var urlRequest: URLRequest {
         let url = URL(string: urlString)!
         var urlRequest = URLRequest(url: url)

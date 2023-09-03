@@ -88,8 +88,7 @@ public class ChatGPTAPI: @unchecked Sendable {
     }
 
     public func sendMessageStream(text: String) async throws -> AsyncThrowingStream<String, Error> {
-        print("send message stream line 91")
-        var request = self.clientRequest
+         var request = self.clientRequest
         request.body = .bytes(try jsonBody(text: text, stream: true))
         
         let response = try await httpClient.execute(request, timeout: .seconds(25))
@@ -131,8 +130,6 @@ public class ChatGPTAPI: @unchecked Sendable {
                             model: String = ChatGPTAPI.Constants.defaultModel,
                             systemText: String = ChatGPTAPI.Constants.defaultSystemText,
                             temperature: Double = ChatGPTAPI.Constants.defaultTemperature) async throws -> String {
-        print("sendMessage no timeout")
-
         var request = self.clientRequest
         request.body = .bytes(try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false))
         
@@ -172,6 +169,7 @@ public class ChatGPTAPI: @unchecked Sendable {
 
     private let urlSession: URLSession = {
         let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 180.0 // Set your timeout value here.
         return URLSession(configuration: configuration)
     }()
 
@@ -186,16 +184,9 @@ public class ChatGPTAPI: @unchecked Sendable {
     public func sendMessageStream(text: String,
                                   model: String = ChatGPTAPI.Constants.defaultModel,
                                   systemText: String = ChatGPTAPI.Constants.defaultSystemText,
-                                  temperature: Double = ChatGPTAPI.Constants.defaultTemperature,
-                                  timeout: Double? = nil) async throws -> AsyncThrowingStream<String, Error> {
-        print("send message stream timeout")
+                                  temperature: Double = ChatGPTAPI.Constants.defaultTemperature) async throws -> AsyncThrowingStream<String, Error> {
         var urlRequest = self.urlRequest
         urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature)
-        
-        if let timeout = timeout {
-            urlSession.configuration.timeoutIntervalForRequest = timeout
-        }
-        
         let (result, response) = try await urlSession.bytes(for: urlRequest)
         try Task.checkCancellation()
         
@@ -237,35 +228,11 @@ public class ChatGPTAPI: @unchecked Sendable {
     public func sendMessage(text: String,
                             model: String = ChatGPTAPI.Constants.defaultModel,
                             systemText: String = ChatGPTAPI.Constants.defaultSystemText,
-                            temperature: Double = ChatGPTAPI.Constants.defaultTemperature,
-                            timeout: Double? = nil) async throws -> String {
-        print("sendMessage timeout")
+                            temperature: Double = ChatGPTAPI.Constants.defaultTemperature) async throws -> String {
+        var urlRequest = self.urlRequest
+        urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
         
-        // Create a new URLRequest
-        let url = URL(string: urlString)!
-        var urlRequest = URLRequest(url: url)
-        urlRequest.httpMethod = "POST"
-        headers.forEach {  urlRequest.setValue($1, forHTTPHeaderField: $0) }
-
-        do {
-            urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
-        } catch {
-            print("Error creating JSON body: \(error)")
-            throw error
-        }
-        
-        print("timeout is: ", timeout)
-        
-        // Set up a custom URLSession with the specified timeout
-        let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = timeout ?? URLSessionConfiguration.default.timeoutIntervalForRequest
-        let session = URLSession(configuration: configuration)
-        
-        if let timeout = timeout {
-            print("TIMEOUT INTERVAL: \(timeout)")
-        }
-        
-        let (data, response) = try await session.data(for: urlRequest)
+        let (data, response) = try await urlSession.data(for: urlRequest)
         try Task.checkCancellation()
         guard let httpResponse = response as? HTTPURLResponse else {
             throw "Invalid response"
@@ -288,8 +255,6 @@ public class ChatGPTAPI: @unchecked Sendable {
             throw error
         }
     }
-
-
     #endif
     
     public func deleteHistoryList() {
@@ -301,4 +266,3 @@ public class ChatGPTAPI: @unchecked Sendable {
     }
     
 }
-

@@ -240,6 +240,7 @@ public class ChatGPTAPI: @unchecked Sendable {
         
         if let timeout = timeout {
             urlSession.configuration.timeoutIntervalForRequest = timeout
+            print("TIMEOUT INTERVAL: \(timeout)")
         }
         
         let (data, response) = try await urlSession.data(for: urlRequest)

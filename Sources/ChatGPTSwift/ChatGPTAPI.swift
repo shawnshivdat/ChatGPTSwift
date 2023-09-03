@@ -244,12 +244,17 @@ public class ChatGPTAPI: @unchecked Sendable {
         urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
         
         print("timeout is: ", timeout)
+        
+        // Set up a custom URLSession with the specified timeout
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = timeout ?? URLSessionConfiguration.default.timeoutIntervalForRequest
+        let session = URLSession(configuration: configuration)
+        
         if let timeout = timeout {
-            urlSession.configuration.timeoutIntervalForRequest = timeout
             print("TIMEOUT INTERVAL: \(timeout)")
         }
         
-        let (data, response) = try await urlSession.data(for: urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
         try Task.checkCancellation()
         guard let httpResponse = response as? HTTPURLResponse else {
             throw "Invalid response"
@@ -272,6 +277,7 @@ public class ChatGPTAPI: @unchecked Sendable {
             throw error
         }
     }
+
     #endif
     
     public func deleteHistoryList() {

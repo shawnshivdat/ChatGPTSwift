@@ -169,7 +169,6 @@ public class ChatGPTAPI: @unchecked Sendable {
 
     private let urlSession: URLSession = {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 180.0 // Set your timeout value here.
         return URLSession(configuration: configuration)
     }()
 
@@ -184,9 +183,15 @@ public class ChatGPTAPI: @unchecked Sendable {
     public func sendMessageStream(text: String,
                                   model: String = ChatGPTAPI.Constants.defaultModel,
                                   systemText: String = ChatGPTAPI.Constants.defaultSystemText,
-                                  temperature: Double = ChatGPTAPI.Constants.defaultTemperature) async throws -> AsyncThrowingStream<String, Error> {
+                                  temperature: Double = ChatGPTAPI.Constants.defaultTemperature,
+                                  timeout: Double? = nil) async throws -> AsyncThrowingStream<String, Error> {
         var urlRequest = self.urlRequest
         urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature)
+        
+        if let timeout = timeout {
+            urlSession.configuration.timeoutIntervalForRequest = timeout
+        }
+        
         let (result, response) = try await urlSession.bytes(for: urlRequest)
         try Task.checkCancellation()
         
@@ -228,9 +233,14 @@ public class ChatGPTAPI: @unchecked Sendable {
     public func sendMessage(text: String,
                             model: String = ChatGPTAPI.Constants.defaultModel,
                             systemText: String = ChatGPTAPI.Constants.defaultSystemText,
-                            temperature: Double = ChatGPTAPI.Constants.defaultTemperature) async throws -> String {
+                            temperature: Double = ChatGPTAPI.Constants.defaultTemperature,
+                            timeout: Double? = nil) async throws -> String {
         var urlRequest = self.urlRequest
         urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
+        
+        if let timeout = timeout {
+            urlSession.configuration.timeoutIntervalForRequest = timeout
+        }
         
         let (data, response) = try await urlSession.data(for: urlRequest)
         try Task.checkCancellation()

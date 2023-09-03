@@ -241,7 +241,13 @@ public class ChatGPTAPI: @unchecked Sendable {
                             timeout: Double? = nil) async throws -> String {
         print("sendMessage timeout")
         var urlRequest = self.urlRequest
-        urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
+        print("urlRequest object retrieved")
+        do {
+            urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
+        } catch {
+            print("Error creating JSON body: \(error)")
+            throw error
+        }
         
         print("timeout is: ", timeout)
         

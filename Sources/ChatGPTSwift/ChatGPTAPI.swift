@@ -240,8 +240,13 @@ public class ChatGPTAPI: @unchecked Sendable {
                             temperature: Double = ChatGPTAPI.Constants.defaultTemperature,
                             timeout: Double? = nil) async throws -> String {
         print("sendMessage timeout")
-        var urlRequest = self.urlRequest
-        print("urlRequest object retrieved")
+        
+        // Create a new URLRequest
+        let url = URL(string: urlString)!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        headers.forEach {  urlRequest.setValue($1, forHTTPHeaderField: $0) }
+
         do {
             urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
         } catch {
@@ -283,6 +288,7 @@ public class ChatGPTAPI: @unchecked Sendable {
             throw error
         }
     }
+
 
     #endif
     

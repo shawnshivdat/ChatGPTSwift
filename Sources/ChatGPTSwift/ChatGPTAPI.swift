@@ -238,6 +238,7 @@ public class ChatGPTAPI: @unchecked Sendable {
         var urlRequest = self.urlRequest
         urlRequest.httpBody = try jsonBody(text: text, model: model, systemText: systemText, temperature: temperature, stream: false)
         
+        print("timeout is: ", timeout)
         if let timeout = timeout {
             urlSession.configuration.timeoutIntervalForRequest = timeout
             print("TIMEOUT INTERVAL: \(timeout)")
